@@ -92,13 +92,11 @@ public class GraphicsDisplay extends JPanel {
         Paint oldPaint = canvas.getPaint();
         Font oldFont = canvas.getFont();
 
-        if (_showAxis)
-            paintAxis(canvas);
+        if (_showAxis) paintAxis(canvas);
 
         paintGraphics(canvas);
 
-        if (_showMarkers)
-            paintMarkers(canvas);
+        if (_showMarkers) paintMarkers(canvas);
 
         canvas.setFont(oldFont);
         canvas.setPaint(oldPaint);

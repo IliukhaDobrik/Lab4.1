@@ -5,15 +5,20 @@ import javax.swing.*;
 import java.awt.*;
 
 public class GraphFrame extends JFrame {
+    private static final int WIDTH = 800;
+    private static final int HEIGHT = 600;
+
+    private GraphicsDisplay display = new GraphicsDisplay();
+
     GraphFrame(){
-        setSize(600,600);
+        setSize(WIDTH,HEIGHT);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setResizable(true);
         setExtendedState(MAXIMIZED_BOTH);
 
-        setJMenuBar(new MyMenuBar());
+        setJMenuBar(new MyMenuBar(display));
 
-        add(new GraphicsDisplay());
+        add(display);
 
         setVisible(true);
     }
