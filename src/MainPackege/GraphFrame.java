@@ -16,7 +16,7 @@ public class GraphFrame extends JFrame {
         setResizable(true);
         setExtendedState(MAXIMIZED_BOTH);
 
-        setJMenuBar(new MyMenuBar(display));
+        setJMenuBar(new MyMenuBar(display, false));
 
         add(display);
 

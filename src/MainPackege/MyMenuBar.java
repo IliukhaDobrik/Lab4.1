@@ -4,6 +4,7 @@ import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.*;
+import java.util.ArrayList;
 
 public class MyMenuBar extends JMenuBar implements ActionListener {
     JMenu fileMenu = new JMenu("Файл");
@@ -19,7 +20,7 @@ public class MyMenuBar extends JMenuBar implements ActionListener {
     private GraphicsDisplay _display;
     JFileChooser fileChooser = null;
 
-    public MyMenuBar(GraphicsDisplay display){
+    public MyMenuBar(GraphicsDisplay display, boolean visible){
         _display = display;
 
         loadItem.addActionListener(this);
@@ -39,9 +40,7 @@ public class MyMenuBar extends JMenuBar implements ActionListener {
         add(fileMenu);
         add(graphicMenu);
 
-        showAxes.setEnabled(false);
-        showPoints.setEnabled(false);
-        saveItem.setEnabled(false);
+        setVisible(visible);
     }
 
     @Override
@@ -50,11 +49,14 @@ public class MyMenuBar extends JMenuBar implements ActionListener {
             if (e.getSource() == loadItem) {
                 if(fileChooser==null){
                     fileChooser=new JFileChooser();
+                    fileChooser.setCurrentDirectory(new File("."));
 
                     if(fileChooser.showOpenDialog(null)==JFileChooser.APPROVE_OPTION){
                         openGraphics(fileChooser.getSelectedFile());
                     }
                 }
+
+                setVisible(true);
             }
             if (e.getSource() == saveItem) {
                 System.out.println("Пока так...");
@@ -67,22 +69,30 @@ public class MyMenuBar extends JMenuBar implements ActionListener {
 
     private void openGraphics(File file){
         try{
-            DataInputStream in = new DataInputStream(new FileInputStream(file.getAbsolutePath()));
+            BufferedReader reader = new BufferedReader(new FileReader(file.getAbsolutePath()));
+            String line;
+            String[] strings = null;
+            ArrayList<Double[]> graphicsData = new ArrayList<>();
 
-            Double[][] graphicsData = new Double[in.available()/(Double.SIZE/8)/2][];
-
-            int i = 0;
-            while (in.available()>0) {
-                Double x = in.readDouble();
-                Double y = in.readDouble();
-                graphicsData[i++] = new Double[] {x, y};
+            while((line = reader.readLine()) != null){
+                strings = line.split(" ");
             }
 
-            if (graphicsData != null && graphicsData.length>0) {
-                _display.showGraphics(graphicsData);
+            Double x = 0d;
+            Double y = 0d;
+            for (int  i = 0; i < strings.length;i++){
+                if (i%2==0) {
+                    x = Double.parseDouble(strings[i]);
+                }
+                if (i%2!=0){
+                    y = Double.parseDouble(strings[i]);
+                    graphicsData.add(new Double[]{x,y});
+                }
             }
 
-            in.close();
+            _display.showGraphics(graphicsData);
+
+            reader.close();
         } catch (FileNotFoundException ex) {
             JOptionPane.showMessageDialog(null, "Указанный файл не найден",
                     "Ошибка загрузки данных", JOptionPane.WARNING_MESSAGE);
@@ -92,5 +102,16 @@ public class MyMenuBar extends JMenuBar implements ActionListener {
                     "Ошибка загрузки данных", JOptionPane.WARNING_MESSAGE);
             return;
         }
+        catch (NumberFormatException ex) {
+            JOptionPane.showMessageDialog(null, "Ошибка чтения координат точек из файла",
+                    "Ошибка загрузки данных", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+    }
+
+    public void setVisible(boolean visible){
+        showAxes.setEnabled(visible);
+        showPoints.setEnabled(visible);
+        saveItem.setEnabled(visible);
     }
 }
