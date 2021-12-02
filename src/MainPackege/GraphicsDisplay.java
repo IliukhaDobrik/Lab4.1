@@ -4,13 +4,16 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.font.FontRenderContext;
 import java.awt.geom.*;
-import java.util.ArrayList;
+import java.util.*;
+import java.util.List;
 
 public class GraphicsDisplay extends JPanel {
     ArrayList<Double[]> _graphicsData;
 
     private boolean _showAxis = true;
     private boolean _showMarkers = true;
+    private boolean _showSquare = false;
+    private boolean _turn = false;
 
     private double minX;
     private double minY;
@@ -26,6 +29,7 @@ public class GraphicsDisplay extends JPanel {
     private BasicStroke _markerStroke;
 
     private Font _axisFont;
+    private Font _squareFont;
 
     public GraphicsDisplay() {
         setBackground(Color.WHITE);
@@ -37,10 +41,19 @@ public class GraphicsDisplay extends JPanel {
         _markerStroke = new BasicStroke(1.0f, BasicStroke.CAP_BUTT,
                 BasicStroke.JOIN_MITER, 10.0f, null, 0.0f);
         _axisFont = new Font("Serif", Font.BOLD, 36);
+        _squareFont = new Font("Sefif", Font.PLAIN, 25);
     }
 
     public void showGraphics(ArrayList<Double[]> graphicsData) {
-        _graphicsData = graphicsData;
+        _graphicsData = new ArrayList<>(graphicsData.size());
+        for (Double[] point : graphicsData){
+            _graphicsData.add(point.clone());
+        }
+        repaint();
+    }
+
+    public void setShowSquare(boolean showSquare){
+        _showSquare = showSquare;
         repaint();
     }
 
@@ -54,7 +67,8 @@ public class GraphicsDisplay extends JPanel {
         repaint();
     }
 
-    public void setTurnGraphics(double angel){
+    public void setTurnGraphics(double angel, boolean turn){
+        _turn = turn;
         _angel = angel;
         repaint();
     }
@@ -62,7 +76,7 @@ public class GraphicsDisplay extends JPanel {
     public void paintComponent(Graphics graphics) {
         super.paintComponent(graphics);
 
-        if (_angel != 0) turnGraphics();
+        if (_turn) turnGraphics();
 
         if (_graphicsData == null || _graphicsData.size() == 0) return;
 
@@ -106,9 +120,11 @@ public class GraphicsDisplay extends JPanel {
         Paint oldPaint = canvas.getPaint();
         Font oldFont = canvas.getFont();
 
+        if(_showSquare) paintSquare(canvas);
         if (_showAxis) paintAxis(canvas);
         paintGraphics(canvas);
         if (_showMarkers) paintMarkers(canvas);
+
 
         canvas.setFont(oldFont);
         canvas.setPaint(oldPaint);
@@ -124,6 +140,77 @@ public class GraphicsDisplay extends JPanel {
             _graphicsData.get(i)[0] = x * Math.cos(Math.toRadians(_angel)) - y * Math.sin(Math.toRadians(_angel));
             _graphicsData.get(i)[1] = x * Math.sin(Math.toRadians(_angel)) + y * Math.cos(Math.toRadians(_angel));
         }
+    }
+
+    private void paintSquare(Graphics2D canvas){
+        canvas.setStroke(_axisStroke);
+        canvas.setColor(Color.MAGENTA);
+        canvas.setPaint(Color.MAGENTA);
+        canvas.setFont(_squareFont);
+
+        SortedMap<Integer,Double[]> zeros = new TreeMap<>();
+        for(int i = 0; i < _graphicsData.size();i++){
+            if (_graphicsData.get(i)[1] == 0)
+                zeros.put(i,_graphicsData.get(i));
+        };
+
+        GeneralPath graphics = new GeneralPath();
+        for (int i = zeros.firstKey(); i <= zeros.lastKey(); i++) {
+            Point2D.Double point = xyToPoint(_graphicsData.get(i)[0], _graphicsData.get(i)[1]);
+            if (i > zeros.firstKey() && i != zeros.lastKey())
+                graphics.lineTo(point.getX(), point.getY());
+            if (i == zeros.firstKey())
+                graphics.moveTo(point.getX(), point.getY());
+            if (i == zeros.lastKey()){
+                graphics.lineTo(point.getX(), point.getY());
+                graphics.closePath();
+            }
+        }
+
+        canvas.fill(graphics);
+        canvas.draw(graphics);
+
+        ///////SQUARE///////
+
+        double a = zeros.get(zeros.firstKey())[0];
+        double b = zeros.get(zeros.lastKey())[0];
+        Double I1 = 0d, I2 = 0d;
+        double n = 2;
+
+        do {
+            I1 = I2;
+            double h = (b - a) / n;
+
+            double sum1 = 0, d1 = a;
+            for (int i = 1; i < n; i+=2) {
+                d1 += h;
+                sum1 += function(d1);
+            }
+
+            double sum2 = 0, d2 = 0;
+            for (int i = 2; i < n - 1; i += 2) {
+                d2 += h;
+                sum2 += function(d2);
+            }
+
+            I2 = h / 3 * (function(a) + 4 * sum1 + 2 * sum2 + function(b));
+
+            n = 2;
+        } while (Math.abs(I1-I2) > 15*10e-4);
+
+        if (I2 < 0)
+            I2 = -I2;
+
+        FontRenderContext context = canvas.getFontRenderContext();
+        canvas.setColor(Color.BLACK);
+
+        Rectangle2D bounds = _squareFont.getStringBounds(I2.toString(), context);
+        double centerX =( zeros.get(zeros.firstKey())[0] + zeros.get(zeros.lastKey())[0])/2;
+        double centerY = (zeros.get(zeros.firstKey())[1] + zeros.get(zeros.lastKey())[1])/2;
+        Point2D.Double labelPos = xyToPoint(centerX, centerY);
+
+        canvas.drawString(I2.toString(), (float) labelPos.getX() - 100,
+                (float) (labelPos.getY() + 80));
     }
 
     private void paintAxis(Graphics2D canvas) {
@@ -171,7 +258,7 @@ public class GraphicsDisplay extends JPanel {
         }
     }
 
-    private void paintMarkers (Graphics2D canvas){
+    private void paintMarkers(Graphics2D canvas){
         canvas.setStroke(_markerStroke);
         canvas.setColor(Color.BLUE);
         canvas.setPaint(Color.BLUE);
@@ -218,5 +305,9 @@ public class GraphicsDisplay extends JPanel {
         Point2D.Double dest = new Point2D.Double();
         dest.setLocation(src.getX() + deltaX, src.getY() + deltaY);
         return dest;
+    }
+
+    private double function(double x){
+        return x*x - 1;
     }
 }

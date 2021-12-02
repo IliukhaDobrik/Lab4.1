@@ -16,12 +16,15 @@ public class MyMenuBar extends JMenuBar implements ActionListener {
 
     JCheckBoxMenuItem showAxes = new JCheckBoxMenuItem("Показать оси координат",true);
     JCheckBoxMenuItem showPoints = new JCheckBoxMenuItem("Показать маркеры точек",true);
-    JMenuItem turnGraphics = new JMenuItem("Повернуть графикa");
+    JCheckBoxMenuItem showSquare = new JCheckBoxMenuItem("Показать замкнутые области",false);
+    JMenuItem turnGraphics = new JMenuItem("Повернуть график на угол альфа");
+    JMenuItem turnAtZero = new JMenuItem("Вернуть график в исходное положение");
 
-    private GraphicsDisplay _display;
+    private final GraphicsDisplay _display;
     JFileChooser fileChooser = null;
 
-    private ArrayList<Double[]> graphicsData = new ArrayList<>();
+    private final ArrayList<Double[]> graphicsData = new ArrayList<>();
+
 
     public MyMenuBar(GraphicsDisplay display, boolean visible){
         _display = display;
@@ -32,11 +35,22 @@ public class MyMenuBar extends JMenuBar implements ActionListener {
 
         showPoints.addActionListener(e -> _display.setShowMarkers(showPoints.getState()));
         showAxes.addActionListener(e -> _display.setShowAxis(showAxes.getState()));
-        turnGraphics.addActionListener(this);
+        showSquare.addActionListener(e -> _display.setShowSquare(showSquare.getState()));
+        turnGraphics.addActionListener(e->{
+            String result = JOptionPane.showInputDialog(this, "Введите угол");
+            double angel = Double.parseDouble(result);
+            _display.setTurnGraphics(angel, true);
+        });
+        turnAtZero.addActionListener(e ->{
+            _display.setTurnGraphics(0, false);
+            _display.showGraphics(graphicsData);
+        });
 
         graphicMenu.add(showAxes);
         graphicMenu.add(showPoints);
+        graphicMenu.add(showSquare);
         graphicMenu.add(turnGraphics);
+        graphicMenu.add(turnAtZero);
 
         fileMenu.add(loadItem);
         fileMenu.add(saveItem);
@@ -66,13 +80,6 @@ public class MyMenuBar extends JMenuBar implements ActionListener {
             catch (NullPointerException ex){
                 System.out.println(ex.getMessage());
             }
-        }
-        if (e.getSource() == turnGraphics){
-            String result = JOptionPane.showInputDialog(this, "Введите угол");
-
-            double angel = Double.parseDouble(result);
-
-            _display.setTurnGraphics(angel);
         }
     }
 
@@ -137,5 +144,6 @@ public class MyMenuBar extends JMenuBar implements ActionListener {
         showPoints.setEnabled(visible);
         saveItem.setEnabled(visible);
         turnGraphics.setEnabled(visible);
+        turnAtZero.setEnabled(visible);
     }
 }
