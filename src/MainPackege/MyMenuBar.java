@@ -16,22 +16,27 @@ public class MyMenuBar extends JMenuBar implements ActionListener {
 
     JCheckBoxMenuItem showAxes = new JCheckBoxMenuItem("Показать оси координат",true);
     JCheckBoxMenuItem showPoints = new JCheckBoxMenuItem("Показать маркеры точек",true);
+    JMenuItem turnGraphics = new JMenuItem("Повернуть графикa");
 
     private GraphicsDisplay _display;
     JFileChooser fileChooser = null;
+
+    private ArrayList<Double[]> graphicsData = new ArrayList<>();
 
     public MyMenuBar(GraphicsDisplay display, boolean visible){
         _display = display;
 
         loadItem.addActionListener(this);
-        saveItem.addActionListener(this);
+        saveItem.addActionListener(e -> saveGraphics(new File("OutCoordinates.txt")));
         exitItem.addActionListener(e ->  System.exit(0));
 
         showPoints.addActionListener(e -> _display.setShowMarkers(showPoints.getState()));
         showAxes.addActionListener(e -> _display.setShowAxis(showAxes.getState()));
+        turnGraphics.addActionListener(this);
 
         graphicMenu.add(showAxes);
         graphicMenu.add(showPoints);
+        graphicMenu.add(turnGraphics);
 
         fileMenu.add(loadItem);
         fileMenu.add(saveItem);
@@ -45,9 +50,9 @@ public class MyMenuBar extends JMenuBar implements ActionListener {
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        try {
-            if (e.getSource() == loadItem) {
-                if(fileChooser==null){
+        if (e.getSource() == loadItem){
+            try {
+                 if(fileChooser==null){
                     fileChooser=new JFileChooser();
                     fileChooser.setCurrentDirectory(new File("."));
 
@@ -58,12 +63,16 @@ public class MyMenuBar extends JMenuBar implements ActionListener {
 
                 setVisible(true);
             }
-            if (e.getSource() == saveItem) {
-                System.out.println("Пока так...");
+            catch (NullPointerException ex){
+                System.out.println(ex.getMessage());
             }
         }
-        catch (NullPointerException ex){
-            System.out.println(ex.getMessage());
+        if (e.getSource() == turnGraphics){
+            String result = JOptionPane.showInputDialog(this, "Введите угол");
+
+            double angel = Double.parseDouble(result);
+
+            _display.setTurnGraphics(angel);
         }
     }
 
@@ -72,7 +81,6 @@ public class MyMenuBar extends JMenuBar implements ActionListener {
             BufferedReader reader = new BufferedReader(new FileReader(file.getAbsolutePath()));
             String line;
             String[] strings = null;
-            ArrayList<Double[]> graphicsData = new ArrayList<>();
 
             while((line = reader.readLine()) != null){
                 strings = line.split(" ");
@@ -109,9 +117,25 @@ public class MyMenuBar extends JMenuBar implements ActionListener {
         }
     }
 
+    private void saveGraphics(File file){
+        try {
+            FileWriter writer = new FileWriter(file.getAbsolutePath());
+
+            for (int i = 0; i < graphicsData.size();i++){
+                writer.write(graphicsData.get(i)[0] + " ");
+                writer.write(graphicsData.get(i)[1] + " ");
+            }
+
+            writer.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
     public void setVisible(boolean visible){
         showAxes.setEnabled(visible);
         showPoints.setEnabled(visible);
         saveItem.setEnabled(visible);
+        turnGraphics.setEnabled(visible);
     }
 }

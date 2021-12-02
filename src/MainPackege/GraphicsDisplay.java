@@ -19,6 +19,8 @@ public class GraphicsDisplay extends JPanel {
 
     private double scale;
 
+    private double _angel;
+
     private BasicStroke _graphicsStroke;
     private BasicStroke _axisStroke;
     private BasicStroke _markerStroke;
@@ -52,8 +54,15 @@ public class GraphicsDisplay extends JPanel {
         repaint();
     }
 
+    public void setTurnGraphics(double angel){
+        _angel = angel;
+        repaint();
+    }
+
     public void paintComponent(Graphics graphics) {
         super.paintComponent(graphics);
+
+        if (_angel != 0) turnGraphics();
 
         if (_graphicsData == null || _graphicsData.size() == 0) return;
 
@@ -68,7 +77,13 @@ public class GraphicsDisplay extends JPanel {
             if (_graphicsData.get(i)[1] > maxY) {
                 maxY = _graphicsData.get(i)[1];
             }
+            if (_graphicsData.get(i)[0] < minX)
+                minX = _graphicsData.get(i)[1];
+            if (_graphicsData.get(i)[0] > maxX) {
+                maxX = _graphicsData.get(i)[1];
+            }
         }
+
         double scaleX = getSize().getWidth() / (maxX - minX);
         double scaleY = getSize().getHeight() / (maxY - minY);
 
@@ -99,6 +114,16 @@ public class GraphicsDisplay extends JPanel {
         canvas.setPaint(oldPaint);
         canvas.setColor(oldColor);
         canvas.setStroke(oldStroke);
+    }
+
+    public void turnGraphics(){
+        for(int i =0; i < _graphicsData.size();i++){
+            double x = _graphicsData.get(i)[0];
+            double y = _graphicsData.get(i)[1];
+
+            _graphicsData.get(i)[0] = x * Math.cos(Math.toRadians(_angel)) - y * Math.sin(Math.toRadians(_angel));
+            _graphicsData.get(i)[1] = x * Math.sin(Math.toRadians(_angel)) + y * Math.cos(Math.toRadians(_angel));
+        }
     }
 
     private void paintAxis(Graphics2D canvas) {

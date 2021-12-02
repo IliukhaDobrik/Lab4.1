@@ -13,7 +13,7 @@ public class GraphFrame extends JFrame {
     GraphFrame(){
         setSize(WIDTH,HEIGHT);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setResizable(true);
+        setResizable(false);
         setExtendedState(MAXIMIZED_BOTH);
 
         setJMenuBar(new MyMenuBar(display, false));
